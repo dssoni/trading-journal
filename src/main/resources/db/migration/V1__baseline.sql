@@ -1,0 +1,1 @@
+-- Baseline migration (no-op). Schema currently managed by Hibernate; Flyway will baseline and track from here.

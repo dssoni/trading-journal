@@ -3,19 +3,19 @@ spring:
     name: trading-journal
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/trading_journal   # <— use your current value
-    username: trader                                        # <— your current value
-    password: secret                                        # <— your current value
-    hikari:
-      maximum-pool-size: 10
+    url: jdbc:postgresql://localhost:5432/trading_journal
+    username: trader
+    password: secret
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: update   # we will replace with Flyway migrations soon
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
-    open-in-view: false
 
-server:
-  port: 8080                # <— your current port if different
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
