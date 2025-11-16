@@ -1,0 +1,29 @@
+### Create user
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "email": "me@local",
+  "name": "Me",
+  "password": "changeme",
+  "isActive": true
+}
+
+### Get user
+GET http://localhost:8080/api/users/1
+
+### Create account
+POST http://localhost:8080/api/accounts
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "name": "Main",
+  "broker": "IBKR",
+  "baseCurrency": "USD",
+  "timezone": "America/Toronto",
+  "isActive": true
+}
+
+### List accounts by user
+GET http://localhost:8080/api/accounts/by-user/1

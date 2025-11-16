@@ -1,0 +1,230 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Trading Journal</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="icon" href="data:,">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">TJ</div>
+      <div class="title">Trading Journal</div>
+    </div>
+    <nav class="menu">
+      <a data-tab="dashboard" class="item active">Dashboard</a>
+      <a data-tab="accounts" class="item">Accounts</a>
+      <a data-tab="instruments" class="item">Instruments</a>
+      <a data-tab="trades" class="item">Trades</a>
+      <a data-tab="fills" class="item">Fills</a>
+      <a data-tab="calendar" class="item">Calendar</a>
+      <div class="sep"></div>
+      <a data-tab="signin" class="item">Sign In</a>
+    </nav>
+    <div class="footer">© <span id="year"></span></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div id="crumbs" class="crumbs">Dashboard</div>
+      <div class="session">
+        <span id="sessionUser" class="muted">Guest</span>
+        <button id="btnLogout" class="ghost">Logout</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <!-- Dashboard -->
+      <section id="tab-dashboard" class="tab active">
+        <div class="grid3">
+          <div class="card stat">
+            <div class="label">Open Trades</div>
+            <div id="statOpenTrades" class="value">0</div>
+          </div>
+          <div class="card stat">
+            <div class="label">This Month P&L</div>
+            <div id="statMonthPnl" class="value">$0</div>
+          </div>
+          <div class="card stat">
+            <div class="label">Accounts</div>
+            <div id="statAccounts" class="value">0</div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h2>Recent Trades</h2>
+            <div id="dashTrades" class="table"></div>
+          </div>
+          <div class="card">
+            <h2>Positions</h2>
+            <div id="dashPositions" class="table muted">No data yet</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Accounts -->
+      <section id="tab-accounts" class="tab">
+        <div class="card">
+          <div class="card-head">
+            <h2>Accounts</h2>
+            <button data-open="modal-account" class="primary">New Account</button>
+          </div>
+          <div id="listAccounts" class="table"></div>
+        </div>
+      </section>
+
+      <!-- Instruments -->
+      <section id="tab-instruments" class="tab">
+        <div class="card">
+          <div class="card-head">
+            <h2>Instruments</h2>
+            <button data-open="modal-instrument" class="primary">Add Instrument</button>
+          </div>
+          <div id="listInstruments" class="table"></div>
+        </div>
+      </section>
+
+      <!-- Trades -->
+      <section id="tab-trades" class="tab">
+        <div class="card">
+          <div class="card-head">
+            <h2>Trades</h2>
+            <button data-open="modal-trade" class="primary">New Trade</button>
+          </div>
+          <div id="listTrades" class="table"></div>
+        </div>
+      </section>
+
+      <!-- Fills -->
+      <section id="tab-fills" class="tab">
+        <div class="card">
+          <div class="card-head">
+            <h2>Fills</h2>
+            <div class="row">
+              <label>Trade<select id="ddlFillsTrade"></select></label>
+              <button id="btnListFills" class="ghost">Refresh</button>
+              <button data-open="modal-fill" class="primary">Add Fill</button>
+            </div>
+          </div>
+          <pre id="outFillsList" class="code"></pre>
+        </div>
+      </section>
+
+      <!-- Calendar -->
+      <section id="tab-calendar" class="tab">
+        <div class="card">
+          <div class="card-head">
+            <h2>Calendar</h2>
+          </div>
+          <div id="calendar" class="calendar"></div>
+          <div id="calendarSummary" class="muted pad-top">Calendar P&L aggregation will show once server endpoint exists.</div>
+        </div>
+      </section>
+
+      <!-- Sign In -->
+      <section id="tab-signin" class="tab">
+        <div class="card narrow">
+          <h2>Sign In</h2>
+          <p class="muted small">Local-only session for dev. Real auth comes next step.</p>
+          <form id="formLogin" class="form">
+            <label>Email<input id="loginEmail" type="email" required placeholder="you@example.com"></label>
+            <label>Name<input id="loginName" type="text" placeholder="Your name"></label>
+            <label class="checkbox"><input id="rememberMe" type="checkbox" checked> Remember me on this device</label>
+            <button class="primary" type="submit">Continue</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Modals -->
+<div id="modal-account" class="modal">
+  <div class="dialog">
+    <div class="dialog-head"><h3>New Account</h3><button class="ghost" data-close>✕</button></div>
+    <form id="formAccount" class="form">
+      <label>Name<input id="accName" required></label>
+      <label>Broker<input id="accBroker" placeholder="Wealthsimple"></label>
+      <label>Base Currency<input id="accCurrency" value="USD"></label>
+      <label>Cost Basis Method<input id="accCbm" placeholder="FIFO"></label>
+      <label>Timezone<input id="accTz" placeholder="America/Toronto"></label>
+      <label class="checkbox"><input type="checkbox" id="accActive" checked> Active</label>
+      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Create</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-instrument" class="modal">
+  <div class="dialog">
+    <div class="dialog-head"><h3>Add Instrument</h3><button class="ghost" data-close>✕</button></div>
+    <form id="formInstrument" class="form">
+      <label>Type
+        <select id="insType">
+          <option value="EQUITY">EQUITY</option>
+          <option value="OPTION">OPTION</option>
+        </select>
+      </label>
+      <label>Symbol (Equity)<input id="insSymbol" placeholder="AAPL"></label>
+      <label>Underlying (Option)<input id="insUnderlying" placeholder="AAPL"></label>
+      <label>Right
+        <select id="insRight">
+          <option value="">—</option>
+          <option value="CALL">CALL</option>
+          <option value="PUT">PUT</option>
+        </select>
+      </label>
+      <label>Strike<input id="insStrike" type="number" step="0.000001"></label>
+      <label>Expiration<input id="insExp" type="date"></label>
+      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Add</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-trade" class="modal">
+  <div class="dialog">
+    <div class="dialog-head"><h3>New Trade</h3><button class="ghost" data-close>✕</button></div>
+    <form id="formTrade" class="form">
+      <label>Account<select id="tradeAccount"></select></label>
+      <label>Instrument<select id="tradeInstrument"></select></label>
+      <div class="grid2">
+        <label>Entry Qty<input id="tradeQty" type="number" step="0.000001"></label>
+        <label>Entry Price<input id="tradePrice" type="number" step="0.000001"></label>
+      </div>
+      <label>Entry At<input id="tradeAt" type="datetime-local"></label>
+      <label>Notes<input id="tradeNotes"></label>
+      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Create</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-fill" class="modal">
+  <div class="dialog">
+    <div class="dialog-head"><h3>Add Fill</h3><button class="ghost" data-close>✕</button></div>
+    <form id="formFill" class="form">
+      <label>Trade<select id="fillTrade"></select></label>
+      <div class="grid2">
+        <label>Side
+          <select id="fillSide">
+            <option value="BUY">BUY (+)</option>
+            <option value="SELL">SELL (-)</option>
+          </select>
+        </label>
+        <label>Qty<input id="fillQty" type="number" step="0.000001"></label>
+      </div>
+      <div class="grid2">
+        <label>Price<input id="fillPrice" type="number" step="0.000001"></label>
+        <label>Executed At<input id="fillAt" type="datetime-local"></label>
+      </div>
+      <label>Commission<input id="fillComm" type="number" step="0.000001" value="0"></label>
+      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Add Fill</button></div>
+    </form>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

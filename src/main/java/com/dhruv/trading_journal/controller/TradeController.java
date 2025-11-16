@@ -1,61 +1,54 @@
 package com.dhruv.trading_journal.controller;
 
+import com.dhruv.trading_journal.dto.TradeDTO;
+import com.dhruv.trading_journal.dto.TradeFillDTO;
+import com.dhruv.trading_journal.service.TradeService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.dhruv.trading_journal.model.Trade;
-import com.dhruv.trading_journal.service.TradeService;
-
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/trades")
-@CrossOrigin(origins = "*") // for frontend testing (adjust in prod)
 public class TradeController {
 
-    private final TradeService tradeService;
-
-    public TradeController(TradeService tradeService) {
-        this.tradeService = tradeService;
-    }
+    private final TradeService trades;
 
     @PostMapping
-    public ResponseEntity<Trade> createTrade(@RequestBody Trade trade) {
-        Trade created = tradeService.createTrade(trade);
-        return ResponseEntity.ok(created);
+    public ResponseEntity<TradeDTO.View> create(@RequestBody @Valid TradeDTO.Create in) {
+        return ResponseEntity.ok(trades.create(in));
     }
 
-    @GetMapping
-    public ResponseEntity<List<Trade>> getAllTrades() {
-        return ResponseEntity.ok(tradeService.getAllTrades());
+    @GetMapping("/by-user/{userId}")
+    public ResponseEntity<List<TradeDTO.View>> listByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(trades.listByUser(userId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Trade> getTradeById(@PathVariable Long id) {
-        return ResponseEntity.ok(tradeService.getTradeById(id));
+    public ResponseEntity<TradeDTO.View> get(@PathVariable Long id) {
+        return ResponseEntity.ok(trades.get(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Trade> updateTrade(@PathVariable Long id, @RequestBody Trade updatedTrade) {
-        return ResponseEntity.ok(tradeService.updateTrade(id, updatedTrade));
+    @PatchMapping("/{id}")
+    public ResponseEntity<TradeDTO.View> update(@PathVariable Long id,
+                                                @RequestBody @Valid TradeDTO.Update in) {
+        return ResponseEntity.ok(trades.update(id, in));
     }
 
-    @PutMapping("/{id}/close")
-    public ResponseEntity<Trade> closeTrade(@PathVariable Long id) {
-        return ResponseEntity.ok(tradeService.closeTrade(id));
+    @PostMapping("/{id}/fills")
+    public ResponseEntity<TradeFillDTO.View> addFill(@PathVariable Long id,
+                                                     @RequestBody @Valid TradeFillDTO.Create in) {
+        if (in.tradeId() == null || !in.tradeId().equals(id)) {
+            in = new TradeFillDTO.Create(id, in.side(), in.qty(), in.price(), in.commission(), in.fees(), in.executedAt());
+        }
+        return ResponseEntity.ok(trades.addFill(in));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTrade(@PathVariable Long id) {
-        tradeService.deleteTrade(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/{id}/fills")
+    public ResponseEntity<List<TradeFillDTO.View>> listFills(@PathVariable Long id) {
+        return ResponseEntity.ok(trades.listFills(id));
     }
 }
