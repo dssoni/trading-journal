@@ -1,97 +1,176 @@
 package com.dhruv.trading_journal.service;
 
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-
+import com.dhruv.trading_journal.dto.TradeDTO;
+import com.dhruv.trading_journal.dto.TradeFillDTO;
+import com.dhruv.trading_journal.model.*;
+import com.dhruv.trading_journal.repository.*;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.dhruv.trading_journal.model.Trade;
-import com.dhruv.trading_journal.model.TradeStatus;
-import com.dhruv.trading_journal.repository.TradeRepository;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class TradeService {
 
-    private final TradeRepository tradeRepository;
+    private final TradeRepository trades;
+    private final TradeFillRepository fills;
+    private final UserAuthRepository users;
+    private final AccountRepository accounts;
+    private final InstrumentRepository instruments;
+    private final PositionRepository positions;
 
-    public TradeService(TradeRepository tradeRepository) {
-        this.tradeRepository = tradeRepository;
+    private static final MathContext MC = MathContext.DECIMAL64;
+
+    @Transactional
+    public TradeDTO.View create(TradeDTO.Create in) {
+        UserAuth user = users.findById(in.userId()).orElseThrow(() -> new EntityNotFoundException("user not found"));
+        Account account = accounts.findById(in.accountId()).orElseThrow(() -> new EntityNotFoundException("account not found"));
+        Instrument instrument = instruments.findById(in.instrumentId()).orElseThrow(() -> new EntityNotFoundException("instrument not found"));
+
+        Trade t = Trade.builder()
+                .user(user)
+                .account(account)
+                .instrument(instrument)
+                .entryQty(in.entryQty())
+                .entryPrice(in.entryPrice())
+                .entryAt(in.entryAt() != null ? in.entryAt() : OffsetDateTime.now())
+                .remainingQty(in.entryQty())
+                .status(in.status() == null ? "OPEN" : in.status())
+                .notes(in.notes())
+                .build();
+        trades.save(t);
+        return toView(t);
     }
 
-    // Create new trade
-    public Trade createTrade(Trade trade) {
-        // TODO ...
-        // Calculate daysHeld if exitDate present
-        // set trade status
-        // set defaults - entry date, time etc.
-        calculateDaysHeld(trade);
-        trade.setTradeStatus(TradeStatus.OPEN);
-        return tradeRepository.save(trade);
+    @Transactional(readOnly = true)
+    public TradeDTO.View get(Long id) {
+        Trade t = trades.findById(id).orElseThrow(() -> new EntityNotFoundException("trade not found"));
+        return toView(t);
     }
 
-    // Get all trades
-    public List<Trade> getAllTrades() {
-        return tradeRepository.findAll();
+    @Transactional
+    public TradeDTO.View update(Long id, TradeDTO.Update in) {
+        Trade t = trades.findById(id).orElseThrow(() -> new EntityNotFoundException("trade not found"));
+        if (in.status() != null) t.setStatus(in.status());
+        if (in.notes() != null) t.setNotes(in.notes());
+        return toView(t);
     }
 
-    // Get trade by id
-    public Trade getTradeById(Long id) {
-        return tradeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Trade not found with id: " + id));
+    public List<TradeDTO.View> listByUser(Long userId) {
+        return trades.findByUserId(userId)
+                .stream()
+                .map(this::toView)
+                .collect(Collectors.toList());
     }
 
-    // Update trade
-    public Trade updateTrade(Long id, Trade trade) {
-        Trade existingTrade = tradeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Trade not found with id: " + id));
+    @Transactional
+    public TradeFillDTO.View addFill(TradeFillDTO.Create in) {
+        Trade t = trades.findById(in.tradeId()).orElseThrow(() -> new EntityNotFoundException("trade not found"));
+        BigDecimal qty = in.qty();
+        BigDecimal price = in.price();
+        BigDecimal commission = in.commission() == null ? BigDecimal.ZERO : in.commission();
+        BigDecimal fees = in.fees() == null ? BigDecimal.ZERO : in.fees();
+        OffsetDateTime ts = in.executedAt() != null ? in.executedAt() : OffsetDateTime.now();
 
-        existingTrade.setSymbol(trade.getSymbol());
-        existingTrade.setEntryDate(trade.getEntryDate());
-        existingTrade.setEntryPrice(trade.getEntryPrice());
-        existingTrade.setEntryTime(trade.getEntryTime());
-        existingTrade.setPositionSize(trade.getPositionSize());
-        existingTrade.setExitDate(trade.getExitDate());
-        existingTrade.setExitPrice(trade.getExitPrice());
-        existingTrade.setExitTime(trade.getExitTime());
-        existingTrade.setCommission(trade.getCommission());
-        existingTrade.setBroker(trade.getBroker());
-        existingTrade.setTradeStatus(trade.getTradeStatus());
-        existingTrade.setNotes(trade.getNotes());
-        existingTrade.setOptionType(trade.getOptionType());
-        existingTrade.setAssetType(trade.getAssetType());
-
-        // Recalculate daysHeld on update
-        calculateDaysHeld(existingTrade);
-
-        return tradeRepository.save(existingTrade);
-    }
-
-    // Close trade by id
-    public Trade closeTrade(Long id) {
-        Trade existingTrade = tradeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Trade not found with id: " + id));
-        existingTrade.setTradeStatus(TradeStatus.CLOSED);
-        // TODO ...
-        // SET P&L
-        // OPEN POPUP TO ENTER MORE DETAILS ETC.
-        return tradeRepository.save(existingTrade);
-    }
-
-    // Delete trade by id
-    public void deleteTrade(Long id) {
-        Trade trade = tradeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Trade not found with id: " + id));
-        tradeRepository.delete(trade);
-    }
-
-    // Private helper to calculate days held
-    private void calculateDaysHeld(Trade trade) {
-        if (trade.getEntryDate() != null && trade.getExitDate() != null) {
-            long daysHeld = ChronoUnit.DAYS.between(trade.getEntryDate(), trade.getExitDate());
-            trade.setDaysHeld((int) daysHeld);
-        } else {
-            trade.setDaysHeld(null);
+        BigDecimal gross = BigDecimal.ZERO;
+        if ("SELL".equalsIgnoreCase(in.side()) && t.getEntryPrice() != null && qty != null) {
+            gross = price.subtract(t.getEntryPrice(), MC).multiply(qty, MC);
         }
+        BigDecimal net = gross.subtract(commission, MC).subtract(fees, MC);
+
+        BigDecimal remaining = t.getRemainingQty() == null ? BigDecimal.ZERO : t.getRemainingQty();
+        if ("SELL".equalsIgnoreCase(in.side())) {
+            remaining = remaining.subtract(qty, MC);
+        } else if ("BUY".equalsIgnoreCase(in.side())) {
+            remaining = remaining.add(qty, MC);
+        }
+        t.setRemainingQty(remaining);
+
+        BigDecimal realizedGross = t.getRealizedGrossPnl() == null ? BigDecimal.ZERO : t.getRealizedGrossPnl();
+        BigDecimal realizedNet   = t.getRealizedNetPnl() == null ? BigDecimal.ZERO : t.getRealizedNetPnl();
+        realizedGross = realizedGross.add(gross, MC);
+        realizedNet   = realizedNet.add(net, MC);
+        t.setRealizedGrossPnl(realizedGross);
+        t.setRealizedNetPnl(realizedNet);
+
+        if (remaining.signum() == 0) t.setStatus("CLOSED");
+        else t.setStatus("PARTIAL");
+
+        TradeFill f = TradeFill.builder()
+                .trade(t)
+                .side(in.side().toUpperCase())
+                .qty(qty)
+                .price(price)
+                .commission(commission)
+                .fees(fees)
+                .executedAt(ts)
+                .realizedGrossPnl(gross)
+                .realizedNetPnl(net)
+                .remainingAfterFill(remaining)
+                .build();
+        fills.save(f);
+
+        upsertPosition(t, in.side(), qty, price);
+
+        return new TradeFillDTO.View(
+                f.getId(), t.getId(), f.getSide(), f.getQty(), f.getPrice(), f.getExecutedAt(),
+                f.getCommission(), f.getFees(), f.getRealizedGrossPnl(), f.getRealizedNetPnl(), f.getRemainingAfterFill()
+        );
     }
 
+    private void upsertPosition(Trade t, String side, BigDecimal qty, BigDecimal price) {
+        Position pos = positions.findByAccountAndInstrument(t.getAccount(), t.getInstrument())
+                .orElse(Position.builder().account(t.getAccount()).instrument(t.getInstrument())
+                        .qty(BigDecimal.ZERO).avgCost(BigDecimal.ZERO).build());
+
+        BigDecimal oldQty = pos.getQty() == null ? BigDecimal.ZERO : pos.getQty();
+        BigDecimal oldAvg = pos.getAvgCost() == null ? BigDecimal.ZERO : pos.getAvgCost();
+
+        if ("BUY".equalsIgnoreCase(side)) {
+            BigDecimal newQty = oldQty.add(qty, MC);
+            BigDecimal newCost = (oldAvg.multiply(oldQty, MC)).add(price.multiply(qty, MC), MC);
+            BigDecimal newAvg = newQty.signum() == 0 ? BigDecimal.ZERO : newCost.divide(newQty, MC);
+            pos.setQty(newQty);
+            pos.setAvgCost(newAvg);
+        } else if ("SELL".equalsIgnoreCase(side)) {
+            BigDecimal newQty = oldQty.subtract(qty, MC);
+            pos.setQty(newQty);
+            if (newQty.signum() == 0) pos.setAvgCost(BigDecimal.ZERO);
+        }
+
+        positions.save(pos);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TradeFillDTO.View> listFills(Long tradeId) {
+        return fills.findByTradeIdOrderByExecutedAtAsc(tradeId).stream().map(f ->
+                new TradeFillDTO.View(
+                        f.getId(), f.getTrade().getId(), f.getSide(), f.getQty(), f.getPrice(), f.getExecutedAt(),
+                        f.getCommission(), f.getFees(), f.getRealizedGrossPnl(), f.getRealizedNetPnl(), f.getRemainingAfterFill()
+                )).toList();
+    }
+
+    private TradeDTO.View toView(Trade t) {
+        return new TradeDTO.View(
+                t.getId(),
+                t.getUser().getId(),
+                t.getAccount().getId(),
+                t.getInstrument().getId(),
+                t.getEntryQty(),
+                t.getEntryPrice(),
+                t.getEntryAt(),
+                t.getRemainingQty(),
+                t.getRealizedGrossPnl(),
+                t.getRealizedNetPnl(),
+                t.getStatus(),
+                t.getNotes()
+        );
+    }
 }

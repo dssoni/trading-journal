@@ -4,56 +4,59 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.OffsetDateTime;
 
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 @Entity
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "trade", indexes = {
+        @Index(name = "idx_trade_user_acct_instr_status", columnList = "user_id, account_id, instrument_id, status"),
+        @Index(name = "idx_trade_acct_instr_entry_at", columnList = "account_id, instrument_id, entry_at")
+})
 public class Trade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String symbol;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserAuth user;
 
-    @Enumerated(EnumType.STRING)
-    private AssetType assetType;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
-    @Enumerated(EnumType.STRING)
-    private OptionType optionType; // Nullable if assetType is STOCK
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "instrument_id", nullable = false)
+    private Instrument instrument;
 
-    private LocalDate entryDate;
-    private LocalTime entryTime;
+    @Column(name = "entry_qty")
+    private BigDecimal entryQty;
 
-    private BigDecimal stockPriceAtEntry; // Display purpose
+    @Column(name = "entry_price")
+    private BigDecimal entryPrice;
 
-    private BigDecimal entryPrice; // Per contract/share
-    private Integer positionSize;
+    @Column(name = "entry_at")
+    private OffsetDateTime entryAt;
 
-    private LocalDate exitDate;
-    private LocalTime exitTime;
-    private BigDecimal exitPrice;
+    @Column(name = "remaining_qty")
+    private BigDecimal remainingQty;
 
-    private Integer daysHeld; // Derived field
+    @Column(name = "realized_gross_pnl", insertable = false)
+    private BigDecimal realizedGrossPnl;
 
-    @Enumerated(EnumType.STRING)
-    private Broker broker;
+    @Column(name = "realized_net_pnl", insertable = false)
+    private BigDecimal realizedNetPnl;
 
-    private BigDecimal commission; // Optional, default logic can be applied if null
+    @Column(nullable = false)
+    private String status; // 'OPEN' | 'PARTIAL' | 'CLOSED'
 
-    private BigDecimal profitLoss; // System-calculated
-    private Boolean winLoss;       // System-calculated
-    private BigDecimal investment; // System-calculated
-
-    @Enumerated(EnumType.STRING)
-    private TradeStatus tradeStatus;
-
-    @Column(length = 1000)
     private String notes;
 
-    // Add method to calculate derived values like profitLoss, investment, etc. in the service layer
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    private OffsetDateTime updatedAt;
 }

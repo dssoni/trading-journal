@@ -1,21 +1,39 @@
 spring:
   application:
     name: trading-journal
-
   datasource:
-    url: jdbc:postgresql://localhost:5432/trading_journal
-    username: trader
-    password: secret
-
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/trading_journal}
+    username: ${DB_USERNAME:trader}
+    password: ${DB_PASSWORD:secret}
   jpa:
     hibernate:
-      ddl-auto: update   # we will replace with Flyway migrations soon
-    show-sql: true
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
-
+        jdbc.time_zone: UTC
   flyway:
     enabled: true
-    baseline-on-migrate: true
     locations: classpath:db/migration
+
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
