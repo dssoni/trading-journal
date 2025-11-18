@@ -72,7 +72,7 @@
             <h2>Accounts</h2>
             <button data-open="modal-account" class="primary">New Account</button>
           </div>
-          <div id="listAccounts" class="table"></div>
+          <div id="listAccountsTable" class="best-table"></div>
         </div>
       </section>
 
@@ -83,7 +83,7 @@
             <h2>Instruments</h2>
             <button data-open="modal-instrument" class="primary">Add Instrument</button>
           </div>
-          <div id="listInstruments" class="table"></div>
+          <div id="listInstrumentsTable" class="best-table"></div>
         </div>
       </section>
 
@@ -94,7 +94,7 @@
             <h2>Trades</h2>
             <button data-open="modal-trade" class="primary">New Trade</button>
           </div>
-          <div id="listTrades" class="table"></div>
+          <div id="listTradesTable" class="best-table"></div>
         </div>
       </section>
 
@@ -144,7 +144,7 @@
 <!-- Modals -->
 <div id="modal-account" class="modal">
   <div class="dialog">
-    <div class="dialog-head"><h3>New Account</h3><button class="ghost" data-close>✕</button></div>
+    <div class="dialog-head"><h3 id="modalAccountTitle">New Account</h3><button class="ghost" data-close>✕</button></div>
     <form id="formAccount" class="form">
       <label>Name<input id="accName" required></label>
       <label>Broker<input id="accBroker" placeholder="Wealthsimple"></label>
@@ -152,14 +152,15 @@
       <label>Cost Basis Method<input id="accCbm" placeholder="FIFO"></label>
       <label>Timezone<input id="accTz" placeholder="America/Toronto"></label>
       <label class="checkbox"><input type="checkbox" id="accActive" checked> Active</label>
-      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Create</button></div>
+      <input type="hidden" id="accIdEdit"/>
+      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Save</button></div>
     </form>
   </div>
 </div>
 
 <div id="modal-instrument" class="modal">
   <div class="dialog">
-    <div class="dialog-head"><h3>Add Instrument</h3><button class="ghost" data-close>✕</button></div>
+    <div class="dialog-head"><h3 id="modalInstrumentTitle">Add Instrument</h3><button class="ghost" data-close>✕</button></div>
     <form id="formInstrument" class="form">
       <label>Type
         <select id="insType">
@@ -178,14 +179,15 @@
       </label>
       <label>Strike<input id="insStrike" type="number" step="0.000001"></label>
       <label>Expiration<input id="insExp" type="date"></label>
-      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Add</button></div>
+      <input type="hidden" id="insIdEdit"/>
+      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Save</button></div>
     </form>
   </div>
 </div>
 
 <div id="modal-trade" class="modal">
   <div class="dialog">
-    <div class="dialog-head"><h3>New Trade</h3><button class="ghost" data-close>✕</button></div>
+    <div class="dialog-head"><h3 id="modalTradeTitle">New Trade</h3><button class="ghost" data-close>✕</button></div>
     <form id="formTrade" class="form">
       <label>Account<select id="tradeAccount"></select></label>
       <label>Instrument<select id="tradeInstrument"></select></label>
@@ -198,7 +200,8 @@
         <label>Entry Time<input id="tradeEntryTime" type="time"></label>
       </div>
       <label>Notes<input id="tradeNotes"></label>
-      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Create</button></div>
+      <input type="hidden" id="tradeIdEdit"/>
+      <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Save</button></div>
     </form>
   </div>
 </div>
