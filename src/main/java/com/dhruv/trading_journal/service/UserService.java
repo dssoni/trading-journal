@@ -22,7 +22,6 @@ public class UserService {
         UserAuth u = UserAuth.builder()
                 .email(in.email())
                 .name(in.name())
-                .password(in.password())  // plain for now; hash later
                 .isActive(in.isActive() == null ? Boolean.TRUE : in.isActive())
                 .build();
         users.save(u);
@@ -40,7 +39,6 @@ public class UserService {
         UserAuth u = users.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("user not found"));
         if (in.name() != null) u.setName(in.name());
-        if (in.password() != null) u.setPassword(in.password());
         if (in.isActive() != null) u.setIsActive(in.isActive());
         return toView(u);
     }

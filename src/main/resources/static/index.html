@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -33,7 +32,7 @@
       <div id="crumbs" class="crumbs">Dashboard</div>
       <div class="session">
         <span id="sessionUser" class="muted">Guest</span>
-        <button id="btnLogout" class="ghost">Logout</button>
+        <button id="btnLogout" class="ghost" style="display:none;">Logout</button>
       </div>
     </header>
 
@@ -129,13 +128,13 @@
       <section id="tab-signin" class="tab">
         <div class="card narrow">
           <h2>Sign In</h2>
-          <p class="muted small">Local-only session for dev. Real auth comes next step.</p>
+          <p class="muted small">Enter your email. You'll receive a magic link.</p>
           <form id="formLogin" class="form">
             <label>Email<input id="loginEmail" type="email" required placeholder="you@example.com"></label>
             <label>Name<input id="loginName" type="text" placeholder="Your name"></label>
-            <label class="checkbox"><input id="rememberMe" type="checkbox" checked> Remember me on this device</label>
-            <button class="primary" type="submit">Continue</button>
+            <button class="primary" type="submit">Send Magic Link</button>
           </form>
+          <div id="loginMsg" style="margin-top:8px;" class="muted small"></div>
         </div>
       </section>
     </main>
@@ -194,7 +193,10 @@
         <label>Entry Qty<input id="tradeQty" type="number" step="0.000001"></label>
         <label>Entry Price<input id="tradePrice" type="number" step="0.000001"></label>
       </div>
-      <label>Entry At<input id="tradeAt" type="datetime-local"></label>
+      <div class="grid2">
+        <label>Entry Date<input id="tradeEntryDate" type="date" required></label>
+        <label>Entry Time<input id="tradeEntryTime" type="time"></label>
+      </div>
       <label>Notes<input id="tradeNotes"></label>
       <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Create</button></div>
     </form>
@@ -209,15 +211,18 @@
       <div class="grid2">
         <label>Side
           <select id="fillSide">
-            <option value="BUY">BUY (+)</option>
-            <option value="SELL">SELL (-)</option>
+            <option value="SELL">BUY</option>
+            <option value="BUY">SELL</option>
           </select>
         </label>
-        <label>Qty<input id="fillQty" type="number" step="0.000001"></label>
+        <label>Qty<input id="fillQty" type="number" min="1" step="1"></label>
       </div>
       <div class="grid2">
         <label>Price<input id="fillPrice" type="number" step="0.000001"></label>
-        <label>Executed At<input id="fillAt" type="datetime-local"></label>
+        <div class="grid2">
+          <label>Execute Date<input id="tradeExitDate" type="date" required></label>
+          <label>Execute Time<input id="tradeExitTime" type="time"></label>
+        </div>
       </div>
       <label>Commission<input id="fillComm" type="number" step="0.000001" value="0"></label>
       <div class="actions"><button data-close class="ghost">Cancel</button><button type="submit" class="primary">Add Fill</button></div>

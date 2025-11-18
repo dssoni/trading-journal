@@ -35,3 +35,7 @@ build/
 
 # ---- Others ----
 *.swp
+
+# Spring Boot local profiles
+application-local.yml
+

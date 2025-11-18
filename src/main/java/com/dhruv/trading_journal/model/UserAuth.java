@@ -23,9 +23,6 @@ public class UserAuth {
 
     private String name;
 
-    // NOTE: plain text for now; we'll add hashing later
-    private String password;
-
     @Column(nullable = false)
     private Boolean isActive = Boolean.TRUE;
 
