@@ -2,7 +2,7 @@ spring:
   application:
     name: trading-journal
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/trading_journal?sslmode=require}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/trading_journal}
     username: ${DB_USERNAME:trader}
     password: ${DB_PASSWORD:secret}
   jpa:
