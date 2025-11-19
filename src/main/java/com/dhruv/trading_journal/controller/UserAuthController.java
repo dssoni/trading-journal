@@ -7,6 +7,7 @@ import com.dhruv.trading_journal.repository.UserAuthRepository;
 import com.dhruv.trading_journal.service.EmailService;
 import com.dhruv.trading_journal.service.JwtUtil;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,9 @@ public class UserAuthController {
     private final UserAuthRepository userAuthRepo;
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     // Constructor injection for clean wiring and testability
     public UserAuthController(UserAuthRepository userAuthRepo, JwtUtil jwtUtil, EmailService emailService) {
@@ -58,7 +62,7 @@ public class UserAuthController {
         String token = jwtUtil.createLoginToken(user.getId(), user.getEmail());
 
         // Construct login link. In production, use your real domain.
-        String link = "http://localhost:8080/api/auth/verify-link?token=" + token;
+        String link = baseUrl + "/api/auth/verify-link?token=" + token;
 
         // Send magic link to user's email inbox
         emailService.send(user.getEmail(), "Sign in to Trading Journal", "Click here to sign in: " + link);
