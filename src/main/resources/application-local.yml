@@ -14,8 +14,4 @@ spring:
           must-revalidate: true
 
   thymeleaf:
-    cache: false   # optional; harmless even if not used
-
-# Optional: override server port locally if needed
-# server:
-#   port: 8080
+    cache: false
